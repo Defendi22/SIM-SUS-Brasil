@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIM — Análise de Mortalidade</title>
+
+  <!-- Fontes -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <!-- Chart.js via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <h1>SIM <span>//</span> Mortalidade</h1>
+      <p>Sistema de Informação sobre Mortalidade — Ministério da Saúde</p>
+    </div>
+    <div class="badge">Dashboard Analítico</div>
+  </header>
+
+  <!-- UPLOAD -->
+  <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+    <h3>📂 Carregar seu CSV</h3>
+    <p>Clique ou arraste o arquivo <strong>SIM_COMPLETO_*.csv</strong> gerado pelo extrator</p>
+    <p style="margin-top:8px; color: var(--accent); font-size:11px;">
+      Processamento 100% local — nenhum dado é enviado para a internet
+    </p>
+    <input type="file" id="fileInput" accept=".csv" onchange="carregarCSV(this)">
+  </div>
+
+  <div class="separator">ou</div>
+  <button class="btn-demo" onclick="carregarDemoData()">▶ Ver com dados de demonstração</button>
+
+  <div class="status-bar" id="statusBar"></div>
+
+  <!-- CONTEÚDO PRINCIPAL (oculto até carregar dados) -->
+  <div id="demo-content">
+
+    <!-- FILTROS -->
+    <div class="filtros">
+      <div class="filtro-group">
+        <label>Ano</label>
+        <select id="filtroAno" onchange="aplicarFiltros()">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label>Sexo</label>
+        <select id="filtroSexo" onchange="aplicarFiltros()">
+          <option value="">Todos</option>
+          <option value="1">Masculino</option>
+          <option value="2">Feminino</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label>Estado (UF Ocorrência)</label>
+        <select id="filtroUF" onchange="aplicarFiltros()">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label>Tipo Óbito</label>
+        <select id="filtroTipo" onchange="aplicarFiltros()">
+          <option value="">Todos</option>
+          <option value="1">Fetal</option>
+          <option value="2">Não-fetal</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpis" id="kpisArea"></div>
+
+    <!-- LINHA 1: Temporal + Estados -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Evolução Temporal de Óbitos</div>
+        <div class="chart-wrap"><canvas id="chartTemporal"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot r"></span> Top 15 Estados por Número de Óbitos</div>
+        <div class="chart-wrap"><canvas id="chartEstados"></canvas></div>
+      </div>
+    </div>
+
+    <!-- LINHA 2: CID + Pirâmide -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="dot g"></span> Top 20 Causas de Morte (CID-10)</div>
+        <div class="chart-wrap tall"><canvas id="chartCID"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot y"></span> Pirâmide Etária por Sexo</div>
+        <div class="chart-wrap tall"><canvas id="chartPiramide"></canvas></div>
+      </div>
+    </div>
+
+    <!-- LINHA 3: Sexo + Local + Escolaridade -->
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Distribuição por Sexo</div>
+        <div class="chart-wrap short"><canvas id="chartSexo"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot r"></span> Local de Ocorrência</div>
+        <div class="chart-wrap short"><canvas id="chartLocal"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot g"></span> Escolaridade do Falecido</div>
+        <div class="chart-wrap short"><canvas id="chartEsc"></canvas></div>
+      </div>
+    </div>
+
+    <!-- MAPA ESTADOS -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title"><span class="dot p"></span> Distribuição por Estado (UF Residência)</div>
+      <div class="mapa-estados" id="mapaEstados"></div>
+    </div>
+
+    <!-- TABELA RANKING CID -->
+    <div class="card">
+      <div class="card-title"><span class="dot y"></span> Ranking Detalhado — Causas Básicas de Morte</div>
+      <div class="table-wrap">
+        <table id="tabelaCID">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Código CID</th>
+              <th>Descrição</th>
+              <th>Óbitos</th>
+              <th>% Total</th>
+              <th>Distribuição</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- fim #demo-content -->
+
+  <footer>
+    <span>SIM — Ministério da Saúde do Brasil</span>
+    <span id="footerInfo">—</span>
+  </footer>
+
+</div>
+
+<!-- Script principal -->
+<script src="app.js"></script>
+</body>
+</html>
